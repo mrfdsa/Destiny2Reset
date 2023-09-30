@@ -1,0 +1,17 @@
+#footerWrapper {
+    width: 100%;
+    height: 3rem;
+    background-color: blue;
+}
+
+.flex {
+    display: flex;
+    flex-wrap: wrap;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+}
+
+.font {
+    color: rgb(220, 220, 220);
+}
