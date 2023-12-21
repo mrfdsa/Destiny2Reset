@@ -1,14 +1,28 @@
-@font-face {font-family:'NanumGothic';src: url('../font/NanumFontSetup_OTF_GOTHIC/NanumGothic.otf');}
-
-#mainWrapper {
+@font-face {
+    font-family: 'NanumGothic';
+    src: url('../font/NanumFontSetup_OTF_GOTHIC/NanumGothic.otf');
+    
+}
+/*레이아웃 쉽게 보기 위한거*/
+.border {
+    border: 1px solid white;
+}
+/****************/
+#wrpMain {
     width: 100%;
-    height: 91%;
-    background-color: bisque;
+    height: 90%;
+    text-align: center;
+}
+.bgImg {
+    background : linear-gradient(#000000, #ffffff);
+}
+#wrpMain > * {
+    color:white;
+}
+.font {
+    font-family: 'NanumGothic' !important;
 }
 
-.font {
-    font-family:'NanumGothic' !important;
-}
 .flex {
     display: flex;
     flex-wrap: wrap;
@@ -16,30 +30,45 @@
     justify-content: space-evenly;
     align-items: center;
 }
+.flexRow {
+    display: flex;
+    flex-wrap: wrap;
+    flex-direction: column;
+    justify-content: space-evenly;
+    align-items: center;
+}
+.grid {
+    display:grid;
+    justify-items: center;
+    align-items: center;
+    grid-template-columns: repeat(5,1fr);
+    grid-template-rows: repeat(5, 1fr);
+    grid-column-gap: 0;
+    grid-row-gap: 0;
+}
+#wrpModifier {
+    width: 20%;
+    height: 30%;
 
-#modalNightfall {
-    width: 100%;
-    height: 70%;
-    background-color: rgb(187, 203, 139);
-    background-repeat: no-repeat;
+    display:flex;
+    flex-wrap: wrap;
+    flex-direction: column;
+    justify-content: space-around;
+    align-items: center;
+}
+#wrpReward {
+    width: 20%;
+    height: 10%;
+    
+    display:flex;
+    flex-wrap:nowrap;
+    flex-direction: row;
+    justify-content: space-evenly;
+    align-items: center;
 }
 
-#modalReward {
-    width: 100%;
-    height: 20%;
-    background-color: rgb(129, 126, 123);
-}
-
-#nightfallTitle {
-    font-size: 45px;
-    color: rgb(167, 167, 167);
-}
-
-#nightfallSubTitle {
-    font-size: 30px;
-    color: white;
-}
-
-#modifier {
-    font-size: 'NanumGothic';
+.ic {
+    width: 2rem;
+    height: 2rem;
+    border-radius: 50%;
 }
