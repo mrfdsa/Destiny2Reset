@@ -1,6 +1,5 @@
 import axios from 'axios';
 import '../style/main.css';
-import {useEffect,useState,props} from 'react';
 // import {createBrowserRouter,RouterProvider} from "react-router-dom";
 import {useQuery} from '@tanstack/react-query';
 
@@ -18,7 +17,8 @@ import {useQuery} from '@tanstack/react-query';
 //전역변수
 const config = {
     imgUrl: 'https://bungie.net',
-    url: 'http://localhost:8080/test'
+    url: 'http://localhost:8080/test',
+    levels: ['vgHero','vgLegend','vgMaster','vgGrandMaster']
 }
 
 //reactQuery getQuery
@@ -28,7 +28,7 @@ const config = {
 //         queryFn:async()=> {
 //             const result = await axios.get(config['url']);
 //             return result['data'];
-//         }
+//         }ww
 //     });
 //     return {data,isLoading};
 // }
@@ -42,6 +42,7 @@ function Main() {
         queryFn:async()=> {
             try{
                 const result = await axios.get(config['url']);
+                console.log(result['data']);
                 return result['data'];
             }catch(error) {
                 console.log(error);
@@ -62,60 +63,45 @@ function Main() {
     //     return output;
     // }
 
+    // 보상 & 모디파이어 작성한 코드(ㅈㄴ 간단해서 코품)
+    // function CmpModifier() {
+    //     const vgModifier = data['modifier']['vgHero'];
+    //     let output=[];
+    //     for(const [index,value] of Object.entries(vgModifier)) {
+    //         if(value['name']) {
+    //         output.push(<img key={index} alt={value['name']} src={config['imgUrl']+value['icon']} className='icModifier flex'/>)
+    //     }}
+    //     return(
+    //         <div id="wrpModifier" className="border">
+    //             {output}
+    //         </div>
+    //     )
+    // }
 
-    function CmpModifier() {
-        const vgModifier = data['modifier']['vgHero'];
-        let output=[];
-        for(const [index,value] of Object.entries(vgModifier)) {
-            if(value['name']) {
-            output.push(<img key={index} alt={value['name']} src={config['imgUrl']+value['icon']} className='icModifier flex'/>)
-        }}
-        return(
-            <div id="wrpModifier" className="border">
-                {output}
-            </div>
-        )
-    }
-
-    function CmpReward() {
-        //난이도별 모디파이어 추출
-        const vgReward = data['rewards']['vgHero'];
-        let output=[];
-        for(const [index,value] of Object.entries(vgReward)) {
-            if(value['name']) {
-                output.push(<img key={index} alt={value['name']} src={config['imgUrl']+value['icon']} className='icReward flex'/>)
-            }
-        }
-        return (
-            <div id="wrpReward" className="border">
-                {output}       
-            </div>
-        )
-    }
+    // function CmpReward() {
+    //     //난이도별 모디파이어 추출
+    //     const vgReward = data['rewards']['vgHero'];
+    //     let output=[];
+    //     for(const [index,value] of Object.entries(vgReward)) {
+    //         if(value['name']) {
+    //             output.push(<img key={index} alt={value['name']} src={config['imgUrl']+value['icon']} className='icReward flex'/>)
+    //         }
+    //     }
+    //     return (
+    //         <div id="wrpReward" className="border">
+    //             {output}       
+    //         </div>
+    //     )
+    // }
     //dataSet: data 종류(modifier,level,etc...)
     //status: style 지정용 class이름(icModifier,icReward)
     //level: 공격전 난이도(vgHero,vgLevend,vgMaster,vgGrandMaster)
-    function RenderComponent(dataSet,level,status) {
-        const result = data[dataSet][level];
-        const state = status;
-        const output=[];
-
-        for(const [index,value] of Object.entries(result)) {
-            if(value['name']) {
-                output.push(<img key={index} alt={value['name']} src={config['imgUrl']+value['icon']} className='ic' />)
-            }
-        }
-        return(
-            <div id={state} className='border flex'>
-                {output}
-            </div>
-        )
-    }   
+      
     //subComp - crucible(예정)
     //subComp - raid(예정)
     if(isLoading) {
         return(
-            <div id="wrpMain" className="flex">
+            <div id="wrpMain" className="mainFlex">
                 <h1 className="mapTitle">Loading...</h1>
             </div>
         );
@@ -126,7 +112,7 @@ function Main() {
 
     if(error) {
         return (
-            <div id="wrpMain" className="flex bgImg">
+            <div id="wrpMain" className="mainFlex bgImg">
                 <h1 className="mapTitle">{error}</h1>
             </div>
         )
@@ -137,11 +123,53 @@ function Main() {
     }
 
     if(data) {
+        const url=config['bgUrl']+data['style']['bgImg'];
+        const levels = Object.keys(data['modifier']).map((val)=>val);
+        function RenderComponent(dataSet,level) {
+            const result = data[dataSet][level];
+            let elId='';
+            let output=[];
+            for(const [index,value] of Object.entries(result)) {
+                if(result[index]['desc'] !== '') {
+                    output.push(<img key={index} alt={value['name']} src={config['imgUrl']+value['icon']} className='ic' />)
+                }
+            }
+            switch(dataSet) {
+                case 'modifier':
+                    elId='wrpModifier';
+                    return(
+                        <div id={elId} className='border mainGrid' >
+                            {output}
+                        </div>
+                    );
+                case 'rewards':
+                    elId='wrpRewards'
+                    return(
+                        <div id={elId} className='border flexRow'>
+                            {output}
+                        </div>
+                    );
+            }
+        } 
+
         return(
-            <div id="wrpMain" className="flexRow bgImg">
-                <h1 id="mapTitle">{data['style']['title']}</h1>
-                {RenderComponent('modifier','vgHero','wrpModifier')}
-                {RenderComponent('rewards','vgHero','wrpReward')}
+            <div id="wrpMain" className="mainFlexRow bgImg">
+                <div className="wrpMain mainFlex border">
+                    {RenderComponent('modifier','vgHero')}
+                    {RenderComponent('rewards','vgHero')}
+                </div>
+                <div className='wrpMain mainFlex border'>
+                    {RenderComponent('modifier','vgLegend')}
+                    {RenderComponent('rewards','vgLegend')}
+                </div>
+                <div className='wrpMain mainFlex border'>
+                    {RenderComponent('modifier','vgMaster')}
+                    {RenderComponent('rewards','vgMaster')}
+                </div>
+                <div className='wrpMain mainFlex border'>
+                    {RenderComponent('modifier','vgGrandMaster')}
+                    {RenderComponent('rewards','vgGrandMaster')}
+                </div>
             </div>
         )
     }
