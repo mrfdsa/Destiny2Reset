@@ -152,24 +152,31 @@ function Main() {
             }
         } 
 
+        if(data) {
+        const levels = Object.keys(data['modifier']).map((val)=>val);
+
+        function RenderComponent(dataSet,level) {
+            let result = data[dataSet][level];
+            let output = [];
+            for(const [index,value] of Object.entries(result)) {
+                if(result[index]['desc'] !== '') {
+                    output.push(<img key={index} alt={value['name']} src={config['imgUrl']+value['icon']} className='ic' />);
+                }
+            }
+            return(
+                <div className={`border mainGrid wrp_${dataSet}`} >
+                    {output}
+                </div>
+            );
+        } 
+        //render render component, wtf??????
         return(
             <div id="wrpMain" className="mainFlexRow bgImg">
-                <div className="wrpMain mainFlex border">
-                    {RenderComponent('modifier','vgHero')}
-                    {RenderComponent('rewards','vgHero')}
-                </div>
-                <div className='wrpMain mainFlex border'>
-                    {RenderComponent('modifier','vgLegend')}
-                    {RenderComponent('rewards','vgLegend')}
-                </div>
-                <div className='wrpMain mainFlex border'>
-                    {RenderComponent('modifier','vgMaster')}
-                    {RenderComponent('rewards','vgMaster')}
-                </div>
-                <div className='wrpMain mainFlex border'>
-                    {RenderComponent('modifier','vgGrandMaster')}
-                    {RenderComponent('rewards','vgGrandMaster')}
-                </div>
+                {levels.map((level)=>
+                    <div className="wrpInfo mainFlex" key={levels.indexOf(level)}>
+                        {config['dataSet'].map((data)=> RenderComponent(data,level))}
+                    </div>
+                )}
             </div>
         )
     }
