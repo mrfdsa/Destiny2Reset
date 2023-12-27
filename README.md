@@ -12,6 +12,4 @@
    - NodeJS => NextJS : express를 썼던 이유는 sqlite3가 NodeJS 환경에서 동작했기 때문
    - API 통신 : 매주 한번씩 갱신해주기, 데이터 결과값은 서버에 일주일 단위로 저장하기
 
-
-3. 구조도
 ![ALT text](./structure.png)
