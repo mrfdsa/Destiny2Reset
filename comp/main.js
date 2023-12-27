@@ -63,7 +63,7 @@ function Main() {
     //     return output;
     // }
 
-    // 보상 & 모디파이어 작성한 코드(ㅈㄴ 간단해서 코품)
+    // 보상 & 모디파이어 작성한 코드
     // function CmpModifier() {
     //     const vgModifier = data['modifier']['vgHero'];
     //     let output=[];
