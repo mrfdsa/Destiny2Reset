@@ -1,146 +1,85 @@
 import sqlite3 from 'sqlite3';
 import cors from 'cors';
 import express from 'express';
+import httpResult from './test2.json' assert {type : 'json'};
 import dotenv from 'dotenv';
-// import { connect, config } from './bungie.js';
-import test from './test.json' assert {type : 'json'};
 dotenv.config({ path: '../.env' });
+//내가 지금 해야하는거
+//1. 레이드 : displayProperties, 주간 레이드는 챌린지 갯수보고 뽑아오기, 근데 어케찾음????????
+//2. 공격전 : displayProperties,activity,modifier - 사실상 이거만 빼오면 됨.
+//3. 잊구 : modifier,rewards - 이건 또 어케찾음????????
+//2029743966 - 공격전
+//그리고 이거 완성되면 db.js 대체할거
+/**expressJS*/
+const server = express();
+const port = process.env.PORT || 8080;
+/**-------*/
 
-
-//고려사항
-//api키는 github에서 숨길수는 있는데 어떻게 숨김???????
-//nextJS 마이그레이션
-
-
-//해야하는 것
-//잊혀진구역 & 주간레이드 정보 모으기
-
-//해쉬추출
-// const result = await connect(config);
-// const weeklyReset = result['data']['Response']['2029743966']['activities'];
-//전역변수
+/**sqlite3*/
 const conDB = {
     dbLoc : process.env.DBLOACTION || '../db/content.db',
-    milestone : `select json from DestinyMilestoneDefinition where id = ?`,
-    modifier : `select json from DestinyActivityModifierDefinition where id = ?`,
-    activity : `select json from DestinyActivityDefinition where id = ?`,
-    item : `select json from DestinyInventoryItemDefinition where id = ?`,
+    milestone : `SELECT json FROM DestinyMilestoneDefinition WHERE id IN (?);`,
+    modifier : `select json from DestinyActivityModifierDefinition where id IN (?)`,
+    activity : `select json from DestinyActivityDefinition where id IN (?)`,
+    item : `select json from DestinyInventoryItemDefinition where id (?)`,
 };
 const vgLevels = ["vgHero", "vgLegend", 'vgMaster', "vgGrandMaster"];
-
-
-//vgInfo : divide weeklyReset by difficulty
-//vgHashes : calculated hashes from weeklyReset - activityHash
-//vgRippedModifier : modifierHashList from vgInfo
-async function getInfo() {
-    let vgInfo={},vgRippedHashList={},vgRippedModifier = {}
-    let vgHashes = [];
-    const weeklyReset = await test['Response']['2029743966']['activities'];
-    for (let i = 0; i < vgLevels.length; i++) {
-        vgInfo[vgLevels[i]] = weeklyReset[i];
-        vgHashes[i] = vgInfo[vgLevels[i]]['activityHash'] >> 32;
-        vgRippedModifier[i] = vgInfo[vgLevels[i]]['modifierHashes'];
-    }
-    // 이 부분을 축약할 방법?
-    for(let i=0; i<Object.keys(vgRippedModifier).length; i++) {
-        let rippedHash = new Array();
-        for(let j=0; j<Object.values(vgRippedModifier[i]).length;j++) {
-            rippedHash[j] = Object.values(vgRippedModifier[i])[j] >> 32;
-        }
-        vgRippedHashList[i] = rippedHash;
-    }
-    return {vgHashes,vgRippedHashList};
+/**---------*/
+function getHash(hash) {
+    //axios로 불러왔을때를 상정해서 JSON파일을 불러오는걸로 대신함
+    //왜냐면 작업하면서 자주 새로고침하면 그만큼 http 요청을 많이 보내야 해서임.
+    const data = hash.Response;
+    const convertedHash = [];
+    Object.keys(data).forEach((val)=> {
+        if(data[val]['startDate'] !== undefined) convertedHash[convertedHash.length] = Number(val) >> 32;
+    });
+    return convertedHash;
 }
-// function getRippedModifierList(hashes) {
-//     for(let i=0; i<Object.keys(vgRippedModifier).length; i++) {
-//         let rippedHash = new Array();
-//         for(let j=0; j<Object.values(vgRippedModifier[i]).length;j++) {
-//             rippedHash[j] = Object.values(vgRippedModifier[i])[j] >> 32;
-//         }
-//         vgRippedHashList[i] = rippedHash;
-//     }
-//     return hashes;
-// }
 
-async function getQuery() {
-    const infoResult = await getInfo();
-    const db = new sqlite3.Database(conDB['dbLoc'],sqlite3.OPEN_READONLY,()=> {console.log('db CON')});
-    let vgDesc = {};
-    let modifierResult = {};
-    let rippedItemHash = {};
-    let itemRewards = {};
-    let style = {};
-    let wtf = Object.keys(test["Response"]);
-    for(const hash of infoResult['vgHashes']) {
-        db.get(conDB['activity'], hash, (error, result) => {
-            if(infoResult['vgHashes'].indexOf(hash) === 0) {
-                const tuneResult = JSON?.parse(result['json']);
-                style = {
-                    bgImage : tuneResult['pgcrImage'],
-                    title : tuneResult['displayProperties']['description'],
-                    icon : tuneResult['displayProperties']['icon']
-                };
-            }
-            const tuneResult = JSON?.parse(result['json']);
-            const index = JSON?.parse(infoResult['vgHashes'].indexOf(hash));
-            vgDesc[index] = tuneResult['displayProperties']['name'];
-            rippedItemHash[index] = tuneResult['rewards'][0]['rewardItems'];
-        });
-    }
-    //modifier
-    for(const keys of Object.keys(infoResult['vgRippedHashList'])) {
-        let objResult = {};
-        // for(const index of infoResult['vgRippedHashList'][key]) {
-        //     console.log(index);
-        //     objResult[Object.keys(objResult).length] = await returnQuery(conDB['modifierQuery'],index);
-        // }
-        for(const index in infoResult['vgRippedHashList'][keys]) {
-            const result = await returnQuery(conDB['modifier'],infoResult['vgRippedHashList'][keys][index]);
-            objResult[index] = {
-                name : result['name'],
-                desc : result['description'],
-                icon : result['icon']
-            }
-        }
-        modifierResult[vgLevels[keys]] = objResult;
-    }
-    //reward
-    for(const key of Object.keys(rippedItemHash)) {
-        let queryResult = {};
-        for(const index in rippedItemHash[key]) {
-            // await returnQuery(conDB['modifierQuery'],infoResult['vgRippedHashList'][key][index])
-            let modifiedHash = rippedItemHash[key][index]['itemHash'] >> 32;
-            queryResult[index] = await returnQuery(conDB['itemQuery'],modifiedHash);
-        };
-        itemRewards[vgLevels[key]] = queryResult;
-    };
-
-    //promise return from modifiers
-    function returnQuery(query,hash) {
-        return new Promise((resolve,reject) => {
-            db.get(query,hash,(error,result)=> {
-                if(error) {console.log(error);}
-                resolve(JSON.parse(result['json'])['displayProperties']);
+function queryResult(query,hashes) {
+    return new Promise((resovle,reject)=> {
+        //query = select json from hashDefinition where id IN (?)
+        //hashes = list of numbers, length is 23
+        let result = {};
+        const multiQuery = query.replace('?',hashes);
+        const db = new sqlite3.Database(conDB['dbLoc'], () => console.log('connected'));
+        db.all(multiQuery,(err,rows)=>{
+            if(err) {reject(err); return;}
+            rows.forEach((val,index)=> {
+                let {displayProperties} = JSON.parse(val['json']);
+                result[displayProperties['name']] = displayProperties;
             });
         });
+        db.close(()=>{
+            console.log('closed');
+            resovle(result);
+        });
+    });
+}
+//입력값 검증 - 이거는 함수값 받을때 쓰는 함수, 미완성
+function chkInput(val,string,func) {
+    if(('/^\d+$/').test(hash) === false && parseInt(hash) !== 0) return;
+    if(Array.isArray(val)) return func(string,val);
+    if(Number(val) !== NaN) return func(string,val);
+    try{
+        const result = 'input value is not right, check code again.';
+        return console.log(result);
+    }catch(error) {
+        return console.log(error.message);
     }
-    db.close(()=> {console.log('closed')});
-    // return {vgDesc,modifierResult,itemRewards,style};
-    return wtf;
 }
 
-//server
-//express & cors & json parse 
-const app = express();
-const port = process.env.PORT || 3000;
-
-app.use(cors());
-app.get('/test', (req, res,error) => {
-    const hashList = returnHash();
+server.use(cors());
+server.get('/', async (req,res)=> {
+    //query = select json from hashDefinition where id IN (?)
+    //hashes = list of numbers, length is 23
+    //milestonetype = 3(raid)
+    const hashList = getHash(httpResult); 
+    const result = await queryResult(conDB['milestone'],hashList);
     res.send(hashList);
-    // res.send({desc : result['vgDesc'],style: result['style'],modifier : result['modifierResult'], rewards: result['itemRewards'] });
+
 });
 
-app.listen(port, () => {
+server.listen(port, () => {
     console.log(`running on ${port}`);
 });
